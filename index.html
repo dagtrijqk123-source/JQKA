@@ -3,278 +3,388 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel - GitHub as DB</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>CRM Configuration Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root { 
-  --bg: #0d0d1a; --surface: #16162a; --surface2: #1e1e36;
-  --border: rgba(255,255,255,0.08); --accent: #7c6af7; --accent2: #5a52e0;
-  --danger: #ef4444; --success: #22c55e; --text: #e8e8f0; --muted: #8888aa;
-  --radius: 12px;
+/* Reset & Base variables */
+:root {
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --primary: #0f172a;       /* Dark sophisticated */
+  --primary-hover: #334155;
+  --accent: #2563eb;        /* Professional blue */
+  --danger: #ef4444;
+  --danger-light: #fee2e2;
+  --success: #10b981;
+  --radius: 6px;
+  --font: 'Inter', sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background-color: var(--bg-app); color: var(--text-primary); font-size: 14px; display: flex; height: 100vh; overflow: hidden; }
+a, button { cursor: pointer; font-family: inherit; }
 
-/* Header */
-.header{background:linear-gradient(135deg,#1a1a35 0%,#0f0f22 100%);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.header-logo{font-size:20px;font-weight:700;background:linear-gradient(135deg,#a78bfa,#7c6af7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+/* SVG Icon Helper */
+svg { flex-shrink: 0; }
 
-/* Auth Bar - GitHub Credentials */
-.auth-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.form-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;width:260px}
-.form-input:focus{border-color:var(--accent)}
-.sync-info{margin-left:auto;font-size:12px;color:var(--muted)}
+/* Sidebar */
+.sidebar { width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar-header { padding: 24px 20px; font-weight: 600; font-size: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.nav-menu { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; color: var(--text-secondary); border-radius: var(--radius); transition: all 0.2s; font-weight: 500; }
+.nav-item:hover { background: #f1f5f9; color: var(--text-primary); }
+.nav-item.active { background: #e0f2fe; color: var(--accent); }
 
-.btn{border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:500;transition:.2s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
-.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
-.btn-danger{background:#ef444422;color:#ef4444;border:1px solid #ef444444}
-.btn-danger:hover{background:#ef444433}
-.btn-secondary{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--border)}
-.btn-secondary:hover{background:rgba(255,255,255,.12)}
-.btn-icon{background:rgba(124,106,247,.15);border:none;color:var(--accent);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:.2s}
-.btn-icon:hover{background:rgba(124,106,247,.3)}
+/* Main Area */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 60px; background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+.content-wrapper { flex: 1; overflow-y: auto; padding: 32px; }
+.content-section { display: none; animation: fadeIn 0.3s; }
+.content-section.active { display: block; }
 
-/* Layout */
-.main{max-width:900px;margin:0 auto;padding:24px}
-.tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius);padding:6px;margin-bottom:20px;border:1px solid var(--border)}
-.tab-btn{flex:1;padding:8px 12px;border:none;background:none;color:var(--muted);border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;transition:.2s}
-.tab-btn.active{background:var(--accent);color:#fff}
-.tab-content{display:none}
-.tab-content.active{display:block}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Section */
-.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
-.section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
-.section-header h2{font-size:14px;font-weight:600}
+/* Headers & Buttons */
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.section-title { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+.section-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 
-/* Items */
-.item-list{padding:8px}
-.item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
-.item:last-child{margin-bottom:0}
-.item-info{flex:1;min-width:0}
-.item-pattern{font-size:13px;font-weight:500;color:var(--accent)}
-.item-file{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.item-title{font-size:13px;font-weight:500}
-.item-actions{display:flex;gap:4px;flex-shrink:0}
-.btn-sm{border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;transition:.2s;color:#fff}
-.btn-sm-edit{background:rgba(124,106,247,.15);color:var(--accent)}
-.btn-sm-del{background:rgba(239,68,68,.12);color:#ef4444}
-.empty{text-align:center;padding:32px 16px;color:var(--muted);font-size:13px}
+.btn { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: var(--radius); border: 1px solid transparent; transition: 0.2s; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: var(--bg-surface); color: var(--text-primary); border-color: var(--border); }
+.btn-secondary:hover { background: #f8fafc; }
+.btn-danger { background: var(--danger-light); color: var(--danger); }
+.btn-danger:hover { background: #fecaca; }
+
+/* Action Bar (Top) */
+.sync-status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; }
+.status-dot.online { background: var(--success); }
+.status-dot.warning { background: #f59e0b; animation: pulse 1.5s infinite; }
+
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+/* Tables */
+.table-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: 14px 20px; border-bottom: 1px solid var(--border); font-size: 13px; }
+th { background: #f8fafc; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+.cell-primary { font-weight: 500; color: var(--text-primary); }
+.cell-secondary { color: var(--text-secondary); }
+.flex-actions { display: flex; gap: 12px; align-items: center; }
+.act-link { color: var(--accent); font-weight: 500; text-decoration: none; font-size: 13px; }
+.act-link.danger { color: var(--danger); }
+.act-link:hover { text-decoration: underline; }
+
+.empty-state { padding: 48px; text-align: center; color: var(--text-secondary); }
+.empty-state svg { margin-bottom: 16px; color: #cbd5e1; }
 
 /* Modal */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
-.modal-overlay.show{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:480px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column}
-.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.modal-header h3{font-size:15px;font-weight:600}
-.modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
-.modal-body{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
-.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.4); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--bg-surface); width: 500px; max-width: 90vw; border-radius: 8px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
+.modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.modal-close { border: none; background: none; color: var(--text-secondary); padding: 4px; border-radius: 4px; }
+.modal-close:hover { background: #f1f5f9; color: var(--text-primary); }
+.modal-body { padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #f8fafc; }
 
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-group label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-group input,.form-group select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;width:100%}
-.btn-upload{background:rgba(124,106,247,.12);border:1px dashed rgba(124,106,247,.4);color:var(--accent);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer}
+/* Forms */
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+label { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+.input-base { border: 1px solid #cbd5e1; background: #fff; padding: 10px 12px; border-radius: 6px; font-size: 13px; color: var(--text-primary); outline: none; transition: 0.2s; font-family: inherit; width: 100%; }
+.input-base:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.file-upload-wrapper { border: 1px dashed #cbd5e1; border-radius: 6px; padding: 16px; text-align: center; background: #f8fafc; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.file-upload-wrapper:hover { border-color: var(--accent); background: #f1f5f9; }
+.file-upload-text { font-size: 13px; color: var(--accent); font-weight: 500; }
+.file-upload-subtext { font-size: 11px; color: var(--text-secondary); }
+.file-active-badge { display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #065f46; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; border: 1px solid #a7f3d0; margin-top: 8px; }
 
-#toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transform:translateY(8px);transition:.3s}
-#toast.show{opacity:1;transform:translateY(0)}
-#toast.success{background:#16231b;border:1px solid #22c55e44;color:#22c55e}
-#toast.error{background:#231616;border:1px solid #ef444444;color:#ef4444}
+/* Toast */
+.toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 20px; background: var(--primary); color: #fff; border-radius: 6px; font-size: 13px; font-weight: 500; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(20px); opacity: 0; transition: 0.3s; z-index: 1000; display: flex; align-items: center; gap: 10px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+.loading-screen { position: fixed; inset: 0; background: var(--bg-surface); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-secondary); }
+.spinner { width: 40px; height: 40px; border: 3px solid #f1f5f9; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="header">
-  <div class="header-logo">⚡ Admin Repo Settings</div>
-  <div style="font-size:12px;color:var(--muted);">Dùng GitHub làm Database vĩnh viễn</div>
+<!-- Initial Loading Screen -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div>Đang đồng bộ dữ liệu hệ thống...</div>
 </div>
 
-<!-- Config Bar -->
-<div class="auth-bar">
-  <div style="display:flex;flex-direction:column;gap:4px">
-    <label style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase">Kho chứa (User/Repo)</label>
-    <input type="text" id="repoInput" class="form-input" placeholder="Ví dụ: toantu/etax-config" style="width:200px">
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#2563eb"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m8 17 4 4 4-4"></path></svg>
+    File Exchange CRM
   </div>
-  <div style="display:flex;flex-direction:column;gap:4px">
-    <label style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase">GitHub PAT Token</label>
-    <input type="password" id="tokenInput" class="form-input" placeholder="ghp_....">
+  <div class="nav-menu">
+    <button class="nav-item active" onclick="switchNav('tab1', this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path></svg>
+      File Thuế Điện Tử
+    </button>
+    <button class="nav-item" onclick="switchNav('tab2', this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+      File AD Block
+    </button>
+    <button class="nav-item" onclick="switchNav('tab3', this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+      Bản ghi Bảng hiển thị
+    </button>
+    <button class="nav-item" onclick="switchNav('tab4', this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+      Kết nối Ứng dụng
+    </button>
   </div>
-  <div style="align-self:flex-end;display:flex;gap:8px">
-    <button class="btn btn-primary" onclick="loadFromGitHub()">🔄 Kết nối</button>
-  </div>
-  
-  <div class="sync-info" id="syncInfo">Vui lòng nhập Repo và Token</div>
 </div>
 
-<!-- Main App -->
-<div class="main" id="mainApp" style="opacity:0.5;pointer-events:none;transition:0.3s">
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('tab1',this)">📁 Tab 1 – File Block</button>
-    <button class="tab-btn" onclick="switchTab('tab2',this)">🌐 Tab 2 – AD Block</button>
-    <button class="tab-btn" onclick="switchTab('tab3',this)">📋 Quản lý hàng giả</button>
-    <button class="tab-btn" onclick="switchTab('tab4',this)">⚙️ API Ứng dụng</button>
-  </div>
-
-  <div id="tab1" class="tab-content active">
-    <div class="section">
-      <div class="section-header">
-        <h2>🔄 Tự động tráo file (thuedientu)</h2>
-        <button class="btn-icon" onclick="openModal('rule')">+</button>
-      </div>
-      <div class="item-list" id="rulesList"><div class="empty">Chưa có rule nào</div></div>
+<!-- Main Content -->
+<div class="main-area">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="sync-status">
+      <div class="status-dot online" id="statusDot"></div>
+      <span id="statusText">Trạng thái: Đã đồng bộ với GitHub</span>
+    </div>
+    <div style="display: flex; gap: 12px;">
+      <button class="btn btn-secondary" onclick="loadFromGitHub(true)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 21v-5h5"></path></svg>
+        Tải lại
+      </button>
+      <button class="btn btn-primary" id="saveGlobalBtn" onclick="pushToGitHub()" disabled style="opacity: 0.6;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Đẩy lên GitHub
+      </button>
     </div>
   </div>
 
-  <div id="tab2" class="tab-content">
-    <div class="section">
+  <div class="content-wrapper">
+    
+    <!-- Tab 1: Thuế Điện Tử -->
+    <div id="tab1" class="content-section active">
       <div class="section-header">
-        <h2>🌐 Tự động tráo file (AD Block)</h2>
-        <button class="btn-icon" onclick="openModal('rule2')">+</button>
+        <div>
+          <h2 class="section-title">Quy tắc File Tráo (Thuế)</h2>
+          <div class="section-subtitle">Quản lý danh sách các tệp tin thay thế áp dụng cho thuedientu.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('rule')">Thêm Bản ghi</button>
       </div>
-      <div class="item-list" id="rules2List"><div class="empty">Chưa có rule nào</div></div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Pattern</th><th>File Thay Thế</th><th>Thao tác</th></tr></thead>
+          <tbody id="rulesList"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <div id="tab3" class="tab-content">
-    <div class="section">
+    <!-- Tab 2: AD Block -->
+    <div id="tab2" class="content-section">
       <div class="section-header">
-        <h2>📋 Quản lý hàng inject giả</h2>
-        <button class="btn-icon" onclick="openModal('row')">+</button>
+        <div>
+          <h2 class="section-title">Quy tắc File Tráo (AD Block)</h2>
+          <div class="section-subtitle">Các tập tin được áp dụng trong môi trường AD Block và tên miền khác.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('rule2')">Thêm Bản ghi</button>
       </div>
-      <div class="item-list" id="dataList"><div class="empty">Chưa có hàng nào</div></div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Pattern</th><th>File Thay Thế</th><th>Thao tác</th></tr></thead>
+          <tbody id="rules2List"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <div id="tab4" class="tab-content">
-    <div class="section" style="padding:20px;font-size:13px;line-height:1.6">
-      <h3 style="color:var(--accent);margin-bottom:12px">Link Cấu hình để dán vào Tiện Ích</h3>
-      <p style="color:var(--muted);font-size:12px;margin-bottom:10px">Đây là link Raw từ CND của GitHub. Tiện ích sẽ gọi link này mỗi 1 phút một lần để áp dụng cài đặt mới (hoàn toàn miễn phí, siêu nhanh).</p>
-      
-      <div style="background:var(--surface2);padding:10px;border-radius:8px;border:1px solid var(--border)">
-        <div style="display:flex;gap:10px;align-items:center">
-          <input type="text" id="finalApiUrlLabel" readonly class="form-input" style="flex:1" placeholder="Vui lòng kết nối Github trước...">
-          <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('finalApiUrlLabel').value); showToast('Đã Copy','success')">Copy</button>
+    <!-- Tab 3: Records -->
+    <div id="tab3" class="content-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Dữ liệu Bảng Hiển thị</h2>
+          <div class="section-subtitle">Tạo các giá trị hiển thị giả tại trang Thuế và Cá nhân.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('row')">Thêm Dữ liệu</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Mã & Tên</th><th>Phân loại</th><th>File đính kèm</th><th>Thao tác</th></tr></thead>
+          <tbody id="dataList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 4: API Info -->
+    <div id="tab4" class="content-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Cài đặt Môi trường</h2>
+          <div class="section-subtitle">Giao thức tĩnh được cung cấp để App Chrome có thể giao tiếp.</div>
+        </div>
+      </div>
+      <div class="table-card" style="padding: 32px; background: transparent; border: none; box-shadow: none;">
+        <div style="max-width: 600px;">
+          <label style="margin-bottom: 8px; display: block;">Endpoint Payload (Content Delivery Network URL)</label>
+          <div style="display: flex; gap: 12px;">
+            <input type="text" id="finalApiEndpoint" class="input-base" readonly style="background: var(--bg-surface);">
+            <button class="btn btn-primary" onclick="copyEndpoint()">Sao chép</button>
+          </div>
+          <p style="margin-top: 12px; color: var(--text-secondary); font-size: 13px; line-height: 1.6;">
+            Hãy sao chép đường dẫn này và gán trực tiếp vào phần <strong>Cấu hình API URL</strong> của tiện ích mở rộng Chrome. Toàn bộ thiết lập qua trang CRM này sẽ đồng bộ thẳng đến App.
+          </p>
         </div>
       </div>
     </div>
-  </div>
 
-  <div style="display:flex;flex-direction:row-reverse;margin-top:20px;align-items:center;gap:15px">
-    <button class="btn btn-primary" onclick="pushToGitHub()" id="saveGlobalBtn" style="padding:12px 24px;font-size:14px">🚀 PUSH LÊN GITHUB</button>
-    <div style="color:#f59e0b;font-size:13px;display:none" id="unsavedWarn">⚠️ Bạn có thay đổi chưa Commit!</div>
   </div>
 </div>
 
-<!-- ================= Modals ================= -->
+<!-- ================= MODALS ================= -->
 
+<!-- Modal: Rule 1 -->
 <div class="modal-overlay" id="ruleModal">
   <div class="modal">
     <div class="modal-header">
-      <h3 id="ruleModalTitle">Thêm Rule</h3>
-      <button class="modal-close" onclick="closeModal('ruleModal')">×</button>
+      <div class="modal-title" id="ruleModalTitle">Cấu hình Quy tắc mới</div>
+      <button class="modal-close" onclick="closeModal('ruleModal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="form-group"><label>Pattern gốc</label><input type="text" id="rulePattern" placeholder="*.xml"></div>
       <div class="form-group">
-        <label>File thay thế (Tối đa 4MB)</label>
+        <label>Định dạng Tệp gốc (Pattern)</label>
+        <input type="text" id="rulePattern" class="input-base" placeholder="*.xml">
+      </div>
+      <div class="form-group">
+        <label>Tệp thay thế (Base64 Inject)</label>
         <input type="file" id="ruleFileInput" style="display:none" onchange="handleFileSelect(this,'ruleFileLabel','ruleFileData')">
-        <button class="btn-upload" onclick="document.getElementById('ruleFileInput').click()">📁 Chọn File</button>
-        <div id="ruleFileLabel" style="font-size:12px;color:var(--success);margin-top:4px"></div>
+        <div class="file-upload-wrapper" onclick="document.getElementById('ruleFileInput').click()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          <div class="file-upload-text">Chọn tệp tin thay thế từ máy tính</div>
+          <div class="file-upload-subtext">Hỗ trợ các định dạng PDF, XML, ZIP... Tệp kích cỡ không vượt quá 4MB.</div>
+        </div>
+        <div id="ruleFileLabel" style="display:none;"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('ruleModal')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveItem('rule')">Xác nhận</button>
+      <button class="btn btn-secondary" onclick="closeModal('ruleModal')">Hủy bỏ</button>
+      <button class="btn btn-primary" onclick="saveItem('rule')">Lưu thay đổi</button>
     </div>
   </div>
 </div>
 
+<!-- Modal: Rule 2 -->
 <div class="modal-overlay" id="rule2Modal">
   <div class="modal">
     <div class="modal-header">
-      <h3 id="rule2ModalTitle">Thêm Rule 2</h3>
-      <button class="modal-close" onclick="closeModal('rule2Modal')">×</button>
+      <div class="modal-title" id="rule2ModalTitle">Cấu hình Quy tắc AD Block</div>
+      <button class="modal-close" onclick="closeModal('rule2Modal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="form-group"><label>Pattern gốc</label><input type="text" id="rule2Pattern" placeholder="*.xml"></div>
       <div class="form-group">
-        <label>File thay thế (Tối đa 4MB)</label>
+        <label>Định dạng Tệp gốc (Pattern)</label>
+        <input type="text" id="rule2Pattern" class="input-base" placeholder="*.xml">
+      </div>
+      <div class="form-group">
+        <label>Tệp thay thế (Base64 Inject)</label>
         <input type="file" id="rule2FileInput" style="display:none" onchange="handleFileSelect(this,'rule2FileLabel','rule2FileData')">
-        <button class="btn-upload" onclick="document.getElementById('rule2FileInput').click()">📁 Chọn File</button>
-        <div id="rule2FileLabel" style="font-size:12px;color:var(--success);margin-top:4px"></div>
+        <div class="file-upload-wrapper" onclick="document.getElementById('rule2FileInput').click()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          <div class="file-upload-text">Chọn tệp tin thay thế từ máy tính</div>
+          <div class="file-upload-subtext">Hỗ trợ mọi định dạng. Kích cỡ không vượt quá 4MB.</div>
+        </div>
+        <div id="rule2FileLabel" style="display:none;"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('rule2Modal')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveItem('rule2')">Xác nhận</button>
+      <button class="btn btn-secondary" onclick="closeModal('rule2Modal')">Hủy bỏ</button>
+      <button class="btn btn-primary" onclick="saveItem('rule2')">Lưu thay đổi</button>
     </div>
   </div>
 </div>
 
+<!-- Modal: Row -->
 <div class="modal-overlay" id="rowModal">
-  <div class="modal" style="width:540px">
+  <div class="modal" style="width: 600px;">
     <div class="modal-header">
-      <h3 id="rowModalTitle">Thêm Hàng Giả</h3>
-      <button class="modal-close" onclick="closeModal('rowModal')">×</button>
+      <div class="modal-title" id="rowModalTitle">Khởi tạo Bản ghi Hiển thị</div>
+      <button class="modal-close" onclick="closeModal('rowModal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label>Loại Trang</label>
-        <select id="rowPageType" onchange="toggleRowFields()">
-          <option value="thue">Thuế Điện Tử</option>
-          <option value="canhan">Thuế Cá Nhân</option>
+        <label>Phân hệ Hệ thống</label>
+        <select id="rowPageType" class="input-base" onchange="toggleRowFields()">
+          <option value="thue">Môi trường: Thuế Điện Tử Hệ Thống</option>
+          <option value="canhan">Môi trường: Thuế Cá Nhân</option>
         </select>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>STT</label><input type="number" id="rowStt" placeholder="1"></div>
-        <div class="form-group"><label>Mã giao dịch</label><input type="text" id="rowId"></div>
+        <div class="form-group"><label>Số Thứ tự</label><input type="number" id="rowStt" class="input-base" placeholder="Tự động"></div>
+        <div class="form-group"><label>Mã giao dịch / Reference</label><input type="text" id="rowId" class="input-base"></div>
       </div>
-      <div class="form-group"><label>Tên tờ khai ngắn / Số TB</label><input type="text" id="rowSoTB"></div>
-      <div class="form-group"><label>Tên tờ khai đầy đủ</label><input type="text" id="rowTitle"></div>
-      <div class="form-group"><label>Ngày Gửi/Nộp</label><input type="text" id="rowDate"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Ký hiệu rút gọn (Số TB)</label><input type="text" id="rowSoTB" class="input-base"></div>
+        <div class="form-group"><label>Ngày khởi tạo (Tùy chỉnh)</label><input type="text" id="rowDate" class="input-base" placeholder="XX/XX/XXXX"></div>
+      </div>
+      <div class="form-group"><label>Tên Vụ / Tiêu đề Full</label><input type="text" id="rowTitle" class="input-base"></div>
       
       <div id="thueOnlyFields">
+        <hr style="border:none; border-top: 1px dashed var(--border); margin: 8px 0 16px 0;">
         <div class="form-row">
-          <div class="form-group"><label>Kỳ thuế</label><input type="text" id="rowPeriod"></div>
-          <div class="form-group"><label>Loại</label><input type="text" id="rowType"></div>
+          <div class="form-group"><label>Kỳ thuế áp dụng</label><input type="text" id="rowPeriod" class="input-base"></div>
+          <div class="form-group"><label>Cấp loại khai báo</label><input type="text" id="rowType" class="input-base" placeholder="VD: Chính thức"></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>Lần nộp</label><input type="number" id="rowSubmit" value="1"></div>
-          <div class="form-group"><label>Bổ sung</label><input type="number" id="rowSupplement" value="0"></div>
+        <div class="form-row" style="margin-top:16px;">
+          <div class="form-group"><label>Lượt trình</label><input type="number" id="rowSubmit" class="input-base" value="1"></div>
+          <div class="form-group"><label>Bản bổ sung</label><input type="number" id="rowSupplement" class="input-base" value="0"></div>
         </div>
-        <div class="form-group"><label>Nơi Nộp</label><input type="text" id="rowLocation"></div>
-        <div class="form-group"><label>Trạng Thái</label><input type="text" id="rowStatus"></div>
+        <div class="form-group" style="margin-top:16px;"><label>Đơn vị cơ sở tiếp nhận</label><input type="text" id="rowLocation" class="input-base"></div>
+        <div class="form-group" style="margin-top:16px;"><label>Message phản hồi từ cơ quan</label><input type="text" id="rowStatus" class="input-base"></div>
       </div>
       
-      <div class="form-group">
-        <label>File tải xuống đính kèm</label>
+      <div class="form-group" style="margin-top: 16px;">
+        <label>Luồng tải tệp đính kèm trực tiếp</label>
         <input type="file" id="rowFileInput" style="display:none" onchange="handleFileSelect(this,'rowFileLabel','rowFileData')">
-        <button class="btn-upload" onclick="document.getElementById('rowFileInput').click()">📁 Chọn File</button>
-        <div id="rowFileLabel" style="font-size:12px;color:var(--success);margin-top:4px"></div>
+        <div class="file-upload-wrapper" onclick="document.getElementById('rowFileInput').click()" style="padding: 12px;">
+          <div class="file-upload-text">Đính kèm thư mục / tệp giả lập</div>
+        </div>
+        <div id="rowFileLabel" style="display:none;"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('rowModal')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveItem('row')">Xác nhận</button>
+      <button class="btn btn-secondary" onclick="closeModal('rowModal')">Hủy bỏ</button>
+      <button class="btn btn-primary" onclick="saveItem('row')">Lưu vào Hệ thống</button>
     </div>
   </div>
 </div>
 
-<div id="toast"></div>
+<div class="toast" id="toast"></div>
 
-<!-- ================= Script ================= -->
+<!-- ================= SCRIPTS ================= -->
 <script>
+// Hardcoded Configuration (System Constants)
+const REPO_PATH = 'dagtrijqk123-source/JQKA';
+const AUTH_TOKEN = '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';
+// Cấu hình URL Github Raw 
+const CONFIG_FILE = 'config.json';
+const RAW_URL = `https://raw.githubusercontent.com/${REPO_PATH}/main/${CONFIG_FILE}`;
+
+// State Management
 let state = { rules: [], rules2: [], dataRows: [], version: 0 };
-let githubSha = null; // Cần thiết báo cho Github biết đang sửa file nào
+let githubSha = null;
 let editTarget = { type: null, id: null };
 let tmpFiles = { ruleFileData:null, ruleFileLabel:'', rule2FileData:null, rule2FileLabel:'', rowFileData:null, rowFileLabel:'' };
+let hasUnsavedChanges = false;
 
-const CONFIG_PATH = 'config.json'; // Tên file lưu trên repo
-
-// Khởi tạo Base64 hỗ trợ Unicode (Tiếng Việt)
+// UTF-8 compatible Base64 encoding tools
 function b64EncodeUnicode(str) {
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
         return String.fromCharCode('0x' + p1);
@@ -286,96 +396,81 @@ function b64DecodeUnicode(str) {
     }).join(''));
 }
 
-// Lấy thông tin đã lưu
-const savedRepo = localStorage.getItem('gh_repo');
-const savedToken = localStorage.getItem('gh_token');
-if (savedRepo) document.getElementById('repoInput').value = savedRepo;
-if (savedToken) document.getElementById('tokenInput').value = savedToken;
-if (savedRepo && savedToken) loadFromGitHub();
-
-function switchTab(id, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById(id).classList.add('active');
+// Startup Initialization
+window.onload = () => {
+  document.getElementById('finalApiEndpoint').value = RAW_URL;
+  loadFromGitHub();
 }
 
-async function loadFromGitHub() {
-  const repo = document.getElementById('repoInput').value.trim();
-  const token = document.getElementById('tokenInput').value.trim();
-  if(!repo || !token) return showToast('Nhập thiếu Repo hoặc Token', 'error');
+// Navigation Handle
+function switchNav(tabId, el) {
+  document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.content-section').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
 
-  document.getElementById('syncInfo').textContent = '⏳ Đang tải từ Repo...';
+// GitHub Engine - Load
+async function loadFromGitHub(manual = false) {
+  if (manual) document.getElementById('loadingScreen').style.display = 'flex';
   
   try {
-    const url = `https://api.github.com/repos/${repo}/contents/${CONFIG_PATH}`;
+    const url = `https://api.github.com/repos/${REPO_PATH}/contents/${CONFIG_FILE}`;
     const res = await fetch(url, {
       headers: { 
-        'Authorization': `token ${token}`,
+        'Authorization': `token ${AUTH_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json'
       }
     });
 
     if (res.status === 404) {
-      // File chưa tồn tại
       state.version = 1;
       githubSha = null;
-      showToast('File cấu hình chưa tồn tại, sẽ tạo mới!', 'success');
+      if(manual) showToast('Database was empty. Initializing new configuration.');
     } else if (!res.ok) {
-      throw new Error(`Phiên GitHub hết hạn hoặc Repo sai (${res.status})`);
+      throw new Error(`Repository authentication rejected (Code: ${res.status})`);
     } else {
       const data = await res.json();
-      githubSha = data.sha; // Lưu SHA để uplate đè
+      githubSha = data.sha;
       const contentStr = b64DecodeUnicode(data.content);
       const json = JSON.parse(contentStr);
-
       state = { ...state, ...json };
       if(!state.version) state.version = 1;
     }
-
-    localStorage.setItem('gh_repo', repo);
-    localStorage.setItem('gh_token', token);
     
-    document.getElementById('mainApp').style = "opacity:1;pointer-events:all;transition:0.3s";
-    
-    // Cập nhật URL public cho Ext
-    // RAW URL không bắt người ta bật GitHub Pages. Siêu tiện!
-    let rawUrl = `https://raw.githubusercontent.com/${repo}/main/${CONFIG_PATH}`;
-    document.getElementById('finalApiUrlLabel').value = rawUrl;
-    
-    document.getElementById('syncInfo').textContent = `✅ Đã kết nối repo: ${repo} (v${state.version})`;
-    document.getElementById('syncInfo').style.color = 'var(--success)';
-    
+    updatePushState(false);
     renderApp();
+    if (manual) showToast('Data synchronized with central server.');
   } catch(e) {
-    showToast(e.message, 'error');
-    document.getElementById('syncInfo').textContent = '❌ Lỗi kết nối Repo';
+    showToast(`Sync Failed: ${e.message}`, true);
+    setConnectionStatus('error');
+  } finally {
+    document.getElementById('loadingScreen').style.display = 'none';
   }
 }
 
+// GitHub Engine - Push
 async function pushToGitHub() {
-  const repo = document.getElementById('repoInput').value.trim();
-  const token = document.getElementById('tokenInput').value.trim();
   const btn = document.getElementById('saveGlobalBtn');
-  
-  btn.textContent = '⏳ ĐANG COMMIT...'; btn.disabled = true;
+  btn.innerHTML = `<svg class="spinner" viewBox="0 0 50 50" style="width:14px;height:14px;border:none;margin-bottom:0;animation:spin 1s linear infinite"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="31.415, 31.415"/></svg> Processing`;
+  btn.disabled = true;
+
   state.version = (state.version || 0) + 1;
 
   try {
     const jsonStr = JSON.stringify(state, null, 2);
-    // Mã hoá Base64 hỗ trợ UTF8
     const base64Content = b64EncodeUnicode(jsonStr);
 
     const body = {
-      message: `Admin Panel update config v${state.version}`,
+      message: `System Admin update (v${state.version})`,
       content: base64Content
     };
-    if (githubSha) body.sha = githubSha; // Nếu có up chồng file cũ
+    if (githubSha) body.sha = githubSha;
 
-    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${CONFIG_PATH}`, {
+    const res = await fetch(`https://api.github.com/repos/${REPO_PATH}/contents/${CONFIG_FILE}`, {
       method: 'PUT',
       headers: { 
-        'Authorization': `token ${token}`,
+        'Authorization': `token ${AUTH_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
       },
@@ -384,25 +479,24 @@ async function pushToGitHub() {
     
     if(!res.ok) {
       const e = await res.json();
-      throw new Error(e.message || 'Lỗi khi Commit');
+      throw new Error(e.message || 'Failure writing to infrastructure.');
     }
     
     const resData = await res.json();
-    githubSha = resData.content.sha; // Cập nhật SHA mới nhất
+    githubSha = resData.content.sha;
     
-    btn.textContent = '✅ ĐÃ PUSH THÀNH CÔNG (v' + state.version + ')';
-    document.getElementById('unsavedWarn').style.display = 'none';
-    showToast('Tải lên Repo hoàn tất!', 'success');
-    
-    setTimeout(() => { btn.textContent = '🚀 PUSH LÊN GITHUB'; btn.disabled = false; }, 3000);
+    updatePushState(false);
+    showToast('Infrastructure record updated successfully.');
   } catch(e) {
-    state.version--; // Revert
-    showToast(e.message, 'error');
-    btn.textContent = '🚀 PUSH LÊN GITHUB'; btn.disabled = false;
+    state.version--;
+    showToast(`Deploy Failed: ${e.message}`, true);
+    setConnectionStatus('error');
+  } finally {
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Đẩy lên GitHub`;
   }
 }
 
-// Render UI Components
+// Local DOM Renders
 function renderApp(){
   renderList('rulesList', state.rules, 'rule');
   renderList('rules2List', state.rules2, 'rule2');
@@ -411,46 +505,50 @@ function renderApp(){
 
 function renderList(containerId, arr, type) {
   const el = document.getElementById(containerId);
-  if(!arr || !arr.length) { el.innerHTML = '<div class="empty">Chưa có bản ghi nào.</div>'; return; }
+  const isRow = type === 'row';
+
+  if(!arr || !arr.length) { 
+    const colCount = isRow ? 4 : 3;
+    el.innerHTML = `<tr><td colspan="${colCount}" class="empty-state">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+      <div>Không tìm thấy bản ghi cấu hình nào trong database.</div>
+    </td></tr>`; 
+    return; 
+  }
   
-  el.innerHTML = arr.map(itm => `
-    <div class="item">
-      <div class="item-info">
-        <div class="item-pattern">${esc(itm.pattern || itm.title || itm.id)}</div>
-        ${itm.fileName ? `<div class="item-file">📎 ${esc(itm.fileName)}</div>` : ''}
-      </div>
-      <div class="item-actions">
-        <button class="btn-sm btn-sm-edit" onclick="openEditModal('${type}','${itm.id}')">Sửa</button>
-        <button class="btn-sm btn-sm-del" onclick="deleteItem('${type}','${itm.id}')">Xóa</button>
-      </div>
-    </div>
-  `).join('');
+  el.innerHTML = arr.map(itm => {
+    if (isRow) {
+      return `<tr>
+        <td><div class="cell-primary">${esc(itm.title || '-')}</div><div class="cell-secondary" style="font-size:12px;margin-top:2px">ID: ${esc(itm.id)}</div></td>
+        <td><div style="display:inline-block;padding:2px 8px;background:#f1f5f9;border-radius:4px;font-size:12px;font-weight:500;color:var(--text-secondary)">${itm.pageType==='thue'?'Thuế Hệ Thống':'Thuế Cá Nhân'}</div></td>
+        <td>${itm.fileName ? `<div style="display:flex;align-items:center;gap:6px;color:var(--text-secondary)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${esc(itm.fileName)}</div>` : '-'}</td>
+        <td><div class="flex-actions"><a class="act-link" onclick="openEditModal('${type}','${itm.id}')">Modify</a><a class="act-link danger" onclick="deleteItem('${type}','${itm.id}')">Delete</a></div></td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td><div class="cell-primary">${esc(itm.pattern)}</div></td>
+        <td>${itm.fileName ? `<div style="display:flex;align-items:center;gap:6px;color:var(--text-secondary)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>${esc(itm.fileName)}</div>` : '-'}</td>
+        <td><div class="flex-actions"><a class="act-link" onclick="openEditModal('${type}','${itm.id}')">Modify</a><a class="act-link danger" onclick="deleteItem('${type}','${itm.id}')">Delete</a></div></td>
+      </tr>`;
+    }
+  }).join('');
 }
 
-function openModal(type) {
-  editTarget = { type, id: null };
-  resetModal(type);
-  document.getElementById(type+'Modal').classList.add('show');
-}
-function openEditModal(type, id) {
-  editTarget = { type, id };
-  const arr = type === 'rule' ? state.rules : type === 'rule2' ? state.rules2 : state.dataRows;
-  const itm = arr.find(x => String(x.id) === String(id));
-  resetModal(type, itm);
-  document.getElementById(type+'Modal').classList.add('show');
-}
+// Controller Logic
+function openModal(type) { editTarget = { type, id: null }; resetModal(type); document.getElementById(type+'Modal').classList.add('show'); }
+function openEditModal(type, id) { editTarget = { type, id }; const arr = type === 'rule' ? state.rules : type === 'rule2' ? state.rules2 : state.dataRows; resetModal(type, arr.find(x => String(x.id) === String(id))); document.getElementById(type+'Modal').classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
 function resetModal(type, d=null) {
   if (type === 'rule' || type === 'rule2') {
-    document.getElementById(type+'ModalTitle').textContent = d ? 'Sửa Rule' : 'Thêm Rule';
+    document.getElementById(type+'ModalTitle').textContent = d ? 'Điều chỉnh Quy tắc' : 'Khởi tạo Quy tắc';
     document.getElementById(type+'Pattern').value = d ? d.pattern : '';
-    document.getElementById(type+'FileLabel').textContent = d ? d.fileName : '';
+    setFileLabel(type+'FileLabel', d ? d.fileName : '');
     document.getElementById(type+'FileInput').value = '';
     tmpFiles[type+'FileData'] = d ? d.fileContent : null;
     tmpFiles[type+'FileLabel'] = d ? d.fileName : '';
   } else if(type === 'row') {
-    document.getElementById('rowModalTitle').textContent = d ? 'Sửa Hàng' : 'Thêm Hàng';
+    document.getElementById('rowModalTitle').textContent = d ? 'Điều chỉnh Bản ghi' : 'Khởi tạo Bản ghi';
     document.getElementById('rowPageType').value = d ? d.pageType : 'thue';
     toggleRowFields();
     
@@ -460,30 +558,38 @@ function resetModal(type, d=null) {
     document.getElementById('rowSubmit').value = d ? (d.submit||1) : 1;
     document.getElementById('rowSupplement').value = d ? (d.supplement||0) : 0;
     
-    if(d && d.id && !document.getElementById('rowId').value) document.getElementById('rowId').value = d.id;
-    
-    document.getElementById('rowFileLabel').textContent = d ? d.fileName : '';
+    setFileLabel('rowFileLabel', d ? d.fileName : '');
     document.getElementById('rowFileInput').value = '';
     tmpFiles.rowFileData = d ? d.fileContent : null;
     tmpFiles.rowFileLabel = d ? d.fileName : '';
   }
 }
 
+function setFileLabel(id, text) {
+  const el = document.getElementById(id);
+  if (text) {
+    el.style.display = 'block';
+    el.innerHTML = `<div class="file-active-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Attached: ${esc(text)}</div>`;
+  } else {
+    el.style.display = 'none';
+    el.innerHTML = '';
+  }
+}
+
 function toggleRowFields() {
-  const t = document.getElementById('rowPageType').value;
-  document.getElementById('thueOnlyFields').style.display = t === 'thue' ? 'block' : 'none';
+  document.getElementById('thueOnlyFields').style.display = document.getElementById('rowPageType').value === 'thue' ? 'block' : 'none';
 }
 
 function handleFileSelect(input, labelId, dataKey) {
   const file = input.files[0];
   if(!file) return;
-  if(file.size > 4*1024*1024) { showToast('File vượt quá 4MB!', 'error'); input.value=''; return;}
+  if(file.size > 4*1024*1024) { showToast('Dung lượng tin nhắn vượt cấu hình (Max 4MB)', true); input.value=''; return;}
   
   const r = new FileReader();
   r.onload = e => {
     tmpFiles[dataKey] = e.target.result;
     tmpFiles[labelId] = file.name;
-    document.getElementById(labelId).textContent = `✅ Đã tải: ${file.name}`;
+    setFileLabel(labelId, file.name);
   };
   r.readAsDataURL(file);
 }
@@ -493,7 +599,7 @@ function saveItem(type) {
   let n = { id: editTarget.id || Date.now()+Math.random() };
   
   if(!isRow) {
-    if(!document.getElementById(type+'Pattern').value.trim()) return showToast('Nhập Pattern','error');
+    if(!document.getElementById(type+'Pattern').value.trim()) return showToast('Bức buộc yêu cầu Định dạng gốc Pattern', true);
     n.pattern = document.getElementById(type+'Pattern').value.trim();
     n.fileName = tmpFiles[type+'FileLabel'];
     n.fileContent = tmpFiles[type+'FileData'];
@@ -523,22 +629,56 @@ function saveItem(type) {
     if(idx>=0) arr[idx] = n;
   } else { arr.push(n); }
   
-  renderApp(); closeModal(type+'Modal');
-  document.getElementById('unsavedWarn').style.display = 'block';
-  showToast('Đã ghi nhận, NHỚ ẤN PUSH!','success');
+  renderApp(); closeModal(type+'Modal'); updatePushState(true);
 }
 
 function deleteItem(type, id) {
-  if(!confirm('Xác nhận xóa?')) return;
+  if(!confirm('Phê duyệt xóa bản ghi này ra khỏi hệ thống nội bộ?')) return;
   if(type==='rule') state.rules = state.rules.filter(x=>String(x.id)!==String(id));
   if(type==='rule2') state.rules2 = state.rules2.filter(x=>String(x.id)!==String(id));
   if(type==='row') state.dataRows = state.dataRows.filter(x=>String(x.id)!==String(id));
-  renderApp();
-  document.getElementById('unsavedWarn').style.display = 'block';
+  renderApp(); updatePushState(true);
+}
+
+// UI State Modifiers
+function updatePushState(isUnsaved) {
+  hasUnsavedChanges = isUnsaved;
+  const btn = document.getElementById('saveGlobalBtn');
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  
+  if (isUnsaved) {
+    btn.disabled = false; btn.style.opacity = '1';
+    dot.className = 'status-dot warning'; txt.textContent = 'Trạng thái: Có thay đổi Local chưa Push';
+  } else {
+    btn.disabled = true; btn.style.opacity = '0.6';
+    dot.className = 'status-dot online'; txt.textContent = 'Trạng thái: Đồng bộ GitHub 100%';
+  }
+}
+
+function setConnectionStatus(s) {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  if(s === 'error') {
+    dot.className = 'status-dot'; dot.style.background = 'var(--danger)'; txt.textContent = 'Trạng thái: Mất kết nối tới Hệ Thống';
+  }
+}
+
+function copyEndpoint() {
+  navigator.clipboard.writeText(RAW_URL);
+  showToast('Endpoint URL Copied to Clipboard');
 }
 
 function esc(s) { return s?String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }
-function showToast(m, c) { const t=document.getElementById('toast'); t.textContent=m; t.className=`show ${c}`; setTimeout(()=> t.className='', 3000); }
+function showToast(m, isError=false) { 
+  const t=document.getElementById('toast'); 
+  t.innerHTML = isError ? 
+    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> ${m}` :
+    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> ${m}`;
+  t.style.background = isError ? 'var(--danger)' : 'var(--primary)';
+  t.classList.add('show'); 
+  setTimeout(()=> t.classList.remove('show'), 3000); 
+}
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click', e=>{if(e.target===el)el.classList.remove('show')}));
 </script>
 </body>
